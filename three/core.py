@@ -6,18 +6,9 @@ import os
 import re
 from collections import defaultdict
 from datetime import date
-
-
 import requests
-from relaxml import xml
-import simplejson as json
-
-try:
-    # Python 2
-    from future_builtins import filter
-except ImportError:
-    # Python 3
-    pass
+import xml
+import json
 
 
 class SSLAdapter(requests.adapters.HTTPAdapter):
@@ -26,11 +17,10 @@ class SSLAdapter(requests.adapters.HTTPAdapter):
         self.ssl_version = ssl_version
         super(SSLAdapter, self).__init__(**kwargs)
 
-    def init_poolmanager(self, connections, maxsize, block):
+    def init_poolmanager(self, connections, maxsize):
         self.poolmanager = requests.packages.urllib3.poolmanager.PoolManager(
             num_pools=connections,
             maxsize=maxsize,
-            block=block,
             ssl_version=self.ssl_version)
 
 
@@ -163,7 +153,7 @@ class Three(object):
             data = json.loads(content)
         elif self.format == 'xml':
             content = xml(content)
-            first = list(content.keys())[0]
+            first = content.keys()[0]
             data = content[first]
         else:
             data = content

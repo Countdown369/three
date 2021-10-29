@@ -3,7 +3,7 @@ Simple, top-level functions for working with the Open311 API.
 """
 
 import os
-from simplejson import dumps
+from json import dumps
 
 from .cities import find_info
 from .core import Three
