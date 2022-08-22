@@ -7,6 +7,8 @@ Created on Wed Nov 24 11:57:28 2021
 """
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import Point, Polygon
@@ -42,7 +44,7 @@ def makeCityGDF(city):
     return bos
 
 # Makes plot
-def plotData(geodata, citydata, shapefile, filterr, name, thetitle, filtertrue, shptrue, basemap, boundary, save):
+def plotData(geodata, citydata, shapefile, filterr, name, thetitle, legendlabel, filtertrue, shptrue, basemap, boundary, save):
     """
     Parameters
     ----------
@@ -58,6 +60,8 @@ def plotData(geodata, citydata, shapefile, filterr, name, thetitle, filtertrue, 
         File name, if saving.
     thetitle : string
         title of plot.
+    legendlabel : string
+        label of legend, if using a shapefile.
     filtertrue : boolean
         Only filters geodata if True.
     shptrue : boolean
@@ -101,24 +105,14 @@ def plotData(geodata, citydata, shapefile, filterr, name, thetitle, filtertrue, 
     if shptrue:
         income = gpd.read_file(shapefile)
         income = income.dropna(0)
-        income = income.drop([171, 174])
-        income['color'] = ''
         
-        counter = -1
-        for value in income['VALUE0']:
-            counter += 1
-            if value > 2500 and value < 41000:
-                income.at[counter,'color']="2500-41000"
-            elif value >= 41000 and value < 53500:
-                income.at[counter,'color']="41000-53500"
-            elif value >= 53500 and value < 67000:
-                income.at[counter,'color']="53500-67000"
-            elif value >= 67000 and value < 90000:
-                income.at[counter,'color']="67000-90000"
-            elif value >= 90000 and value < 10000000:
-                income.at[counter,'color']="90000+"
-                
-        income.plot(ax=ax, column = 'color', alpha = 0.4, legend = True)
+        # Drop park areas (Franklin Park Zoo, Roslindale parks)
+        income = income.drop([171, 174])
+        
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.1)
+        
+        income.plot(ax=ax, cmap='OrRd', column = 'VALUE0', alpha = 0.61, legend = True, cax = cax)
     
     
     # Set bounds for plot
@@ -127,16 +121,20 @@ def plotData(geodata, citydata, shapefile, filterr, name, thetitle, filtertrue, 
     
     # Add basemap if wanted
     if basemap:
+        import pdb; pdb.set_trace()
         ctx.add_basemap(ax, crs=citydata.crs.to_string(), source=ctx.providers.CartoDB.Voyager)
         
     # Labels
-    plt.title(thetitle)
+    plt.title(thetitle, loc = 'right')
     plt.xlabel("Longitude")
-    plt.ylabel("Latitude")
+    if shptrue:
+        plt.ylabel(legendlabel, loc = 'center')
+    else:
+        plt.ylabel("Latitude")
     
     # Save map to file as PNG if wanted
     if save:
-        plt.savefig(name, dpi = 300)
+        plt.savefig(name, dpi = 300, bbox_inches='tight')
         
     plt.show()
     
@@ -151,9 +149,9 @@ def main():
     geodata = servicecallGDF("output.pkl")
     bos = makeCityGDF("boston")
     
-    # This example prints out the income-based map.
+    # This example prints out the education-based map.
     # See plotData() for info on arguments.
-    plotData(geodata, bos, "income.dbf", 'Street Lights', "incomemap.png", "2019-2021 Boston 311 Service Requests by Census Tract Income", False, True, True, False, True)
+    plotData(geodata, bos, "education/edu.dbf", 'Street Lights', "ack1.png", "2019-2021 Boston 311 Service Requests by Education", "Educational Attainment", False, True, True, False, True)
     
     # issueFrequency(geodata)
     
